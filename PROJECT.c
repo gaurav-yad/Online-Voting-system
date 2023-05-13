@@ -4,26 +4,31 @@
 struct candidate {
     int id;
     char name[50];
-    char vote;
+    char vote; 
 };
 
 void add_Voter();
 void cast_vote();
 void view_results();
 void print_voter_list();
+void del_voter();
 
 int main() {
     int choice;
+    char adminpw[]="CSE101";
+    char pw[10];
     
     while (1) {
-        printf("Welcome to the ONLINE VOTING SYSTEM\n");
+        printf("\nWelcome to the ONLINE VOTING SYSTEM\n");
         printf("1. Add a Voter\n");
         printf("2. Cast Vote\n");
         printf("3. View Vote count of each party\n");
-        printf("4. View eligible Candidates list.\n");
-        printf("5. Exit\n");
+        printf("4. View eligible voters list.\n");
+        printf("5. Delete a voter from voter list.\n");
+        printf("6. Exit\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
+        fflush(stdin);
         
         switch (choice) {
             case 1:
@@ -33,12 +38,35 @@ int main() {
                 cast_vote();
                 break;
             case 3:
-                view_results();
+                printf("Enter the administrator password to see the results: ");
+                gets(pw);
+                if(strcmp(pw, adminpw)){
+                    printf("Wrong admin pw, access denied.\n");;
+                }else{
+                    printf("Correct password, access granted.\n");
+                    view_results();
+                }
                 break;
             case 4:
-                print_voter_list();
+                printf("Enter the administrator password to see the voter list: ");
+                gets(pw);
+                if(strcmp(pw, adminpw)){
+                    printf("Wrong admin pw, access denied.\n");
+                }else{
+                    printf("Correct password, access granted.\n");
+                    print_voter_list();
+                }
                 break;
             case 5:
+                printf("Enter the administrator passowrd to delete a voter: ");
+                gets(pw);
+                if(strcmp(pw, adminpw)){
+                    printf("Wrong admin pw, access denied.\n");
+                }else{
+                    del_voter();
+                }
+                break;
+            case 6:
                 printf("Thank you for using the ONLINE VOTING SYSTEM.\n");
                 goto end;
             default:
@@ -47,7 +75,6 @@ int main() {
     }
 
     end:
-    
     return 0;
 }
 
@@ -62,7 +89,7 @@ void add_Voter() {
      
         fp = fopen("candidates.txt","a+");
     
-        printf("Enter four digit candidate ID: ");
+        printf("Enter a unique four digit voter ID: ");
         scanf("%d", &c.id);
 
         while(fgets(line, 1000, fp)){
@@ -73,8 +100,8 @@ void add_Voter() {
                 goto end2;
             }
         }
-    
-        printf("Enter candidate name: ");
+            
+        printf("Enter voter name: ");
         fflush(stdin);
         gets(c.name);
     
@@ -83,6 +110,7 @@ void add_Voter() {
         fprintf(fp, "%d\t%s\t%c\n",c.id, c.name, c.vote);
     
         printf("Voter added successfully.\n");
+        goto end2;
         end2:
         fclose(fp);
     }else{
@@ -106,7 +134,7 @@ void cast_vote() {
     printf("XYZ\t\t B\n");
     printf("PQR\t\t C\n");
     
-    printf("Enter candidate ID to cast vote: ");
+    printf("Enter voter ID to cast vote: ");
     scanf("%d", &Cid);
 
     if(fp==NULL){
@@ -167,7 +195,6 @@ void cast_vote() {
     }
 }
 
-
 void view_results() {
     FILE *fp;
     struct candidate c;
@@ -210,3 +237,47 @@ void print_voter_list() {
         printf("%s\n", line);
     }
 }
+
+void del_voter() {
+    FILE *fp, *temp;
+    int delid, found = 0, id;
+    char line[1000];
+    
+    printf("Enter the voter ID to delete: ");
+    scanf("%d", &delid);
+    
+    fp = fopen("candidates.txt", "r");
+    temp = fopen("temp.txt", "w");
+    
+    if (fp == NULL) {
+        printf("Error opening file.\n");
+        return;
+    }
+    
+    while (fgets(line, 1000, fp)) {
+        sscanf(line, "%4d", &id);
+        if (id == delid) {
+            found = 1;
+            continue;
+        }
+        fprintf(temp, "%s", line);
+    }
+    
+    fclose(fp);
+    fclose(temp);
+    
+    if (found == 0) {
+        printf("Entered Voter ID does not exist.\n");
+    } else {
+        if (remove("candidates.txt") == 0) {
+            if (rename("temp.txt", "candidates.txt") == 0) {
+                printf("Voter deleted successfully.\n");
+            } else {
+                printf("Error renaming temporary file.\n");
+            }
+        } else {
+            printf("Error deleting original file.\n");
+        }
+    }
+}
+
